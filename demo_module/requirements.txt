@@ -1,0 +1,1 @@
+https://bitbucket.org/trytonspain/trytond-party_communication/get/3.0.tar.gz
