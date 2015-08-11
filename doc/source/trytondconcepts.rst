@@ -5,7 +5,7 @@ Tryton Daemon (Trytond) Concepts
 The Trytond kernel provides a framework for modeling objects of interest to the
 programmer in Python and storing them in a database.  The framework
 makes common needs for handling instances of these objects easy through idioms
-described in the official documentation_, and `unofficial documentation`.
+described in the official documentation_, and `unofficial documentation`_.
 
 Understanding the ideas described in this page makes learning the practical
 details of the Tryton daemon easier.
@@ -26,10 +26,10 @@ the database), and ``ModelView`` (any model that will will render a graphical
 view).  Almost all models used in implementations multiply inherit from both
 ModelSQL and ModelView.  Exceptions include: (1) certain windows (typically used
 in wizards) present fill-in-form views where inputs guide the execution of the
-wizard are not stored to the database, and thus only inherit from
-``ModelView``), but guide the execution of the wizard; and (2) intersection
-models used to support a Many2Many relation, which do not need to be displayed
-to the user and, thus, typically only inherit from ``ModelSQL``.
+wizard, but are not stored to the database, and thus only inherit from
+``ModelView``); and (2) intersection models used to support a Many2Many
+relation, which do not need to be displayed to the user and, thus, typically
+only inherit from ``ModelSQL``.
  
 Reports are templates in the Open Document format that are used to generate
 documentary reports for users.  Wizards are used to guide users through
@@ -52,14 +52,14 @@ Modules
 -------
 
 Trytond is designed to be highly extensible through modules, which are Python
-packages that define Trtyond new objects and/or enhance objects defined in
+packages that define new Trtyond objects and/or enhance objects defined in
 other modules.
 
 The Pool
 --------
 
 The Pool functions as a dictionary from which Classes are retrieved by their
-__name__ attribute (ie, the dictionary entries are [class __name__]:[class
+__name__ attribute (i.e., the dictionary entries are [class __name__]:[class
 object]).  This means that, in Tryton, when you want to work with a
 class object, you use a different syntax than Python standard.
 
@@ -84,26 +84,29 @@ to use a unique, and very powerful, idiom for inheritance.
 
 When a class is registered to the Pool (in ``__init__.py``), Trytond checks to see
 if an entry already exists for the class's ``__name__``.  If it does, then Trytond
-creates a new class which multiply inherits from existing class object in the
+creates a new class which multiply inherits from the existing class object in the
 Pool, and the new class object being registered, and replaces the value with
-that new class.  This means that (within the three Trytond object types) any
-two classes (typically from different modules) with the same ``__name__``
-attribute become joined in a single class.  An optional idiom for identifying a
-class as extending an existing model is to declare that class using Python 2
-old-class syntax (which is the same as Python 3 syntax), e.g., ``AClass:``
-rather than ``AClass(object):``.  In order for this to work, the class's
-metaclass must be set to ``PoolMeta``, so as to make it loadable in the Pool.
-Often ``PoolMeta`` is set at the module level.
+this multiply inheriting class.  This means that (within the three Trytond
+object types) any two classes (typically from different modules) with the same
+``__name__`` become joined in a single class.  It is customary (but optional)
+to flag a class as extending an existing model by declaring that class
+using Python 2 old-class syntax (which is the same as Python 3 syntax), e.g.,
+``AClass:`` rather than ``AClass(object):``.  In order for this to work, the
+class's metaclass must be set to ``PoolMeta``, so as to make it loadable in the
+Pool.  Often ``PoolMeta`` is set at the module level.
 
-This overcomes obstacles that the normal Python inheritance approach poses for
+Tryton's inheritance scheme overcomes obstacles that Python normally poses for
 extensibility through modules.  For example, a widely used module defines the
-class ``Party``, with the ``__name__`` ``party.party``.  If two separate modules both
-depend on party and extent the Party class (by adding attributes to it), then,
-from the point of view of traditional Python inheritance, the two dependent
-modules have created two separate classes.  In order to make Party a single
-class again, one would need to edit one of the two modules to inherit from the
-other, rather than directly from ``Party``.  Trytond inheritance, however, avoids
-this problem, making it extremely easy to share modules among developers.  
+class ``Party``, with the ``__name__`` ``party.party``.  If two separate
+modules both depend on party and extent the Party class (e.g., by adding
+attributes to it), then, from the point of view of traditional Python
+inheritance, the two dependent modules have created two separate classes.  In
+order to make Party a single class again, one would need to edit one of the two
+modules to inherit from the other, rather than directly from ``Party``.
+Trytond inheritance avoids this problem, making it extremely easy to share
+modules among developers.  The risk is present, of course, to break code
+through  clashing attributes across  modules, so developers must take
+care to understand each module they include. 
 
 Modifying Inherited Attributes with __setup__
 ---------------------------------------------
@@ -119,7 +122,7 @@ in a ``__setup__`` method.  For example:
 
   @classmethod
   def __setup__(cls):
-      super(Attachment, cls).__setup__()
+      super(ClassName, cls).__setup__()
       cls.an_attribute.update({'new': 'value'})
 
 Tryton runs each model's ``__setup__`` while loading the Pool.
@@ -151,7 +154,7 @@ simply returns that Transaction.  As a result of this, the standard idiom it
 call Transaction() whenever referencing it, other than at import.
 
 Each Transaction has a ``context`` dictionary that persists throughout the
-transaction can can be used to store information for use in distant parts of
+transaction and can be used to store information for use in distant parts of
 the codebase (although this is somewhat of a hack and overuse will lead to
 maintenance difficulties):
 
@@ -162,7 +165,7 @@ maintenance difficulties):
 
   # An approach less prone to unforeseen consequences, temporarily
   # updates the context
-  with Transaction().set_context({'foo': bar}):
+  with Transaction().set_context({'foo': 'bar'}):
       [do stuff]
       # upon exiting the 'with' the original context is restored
 
@@ -171,7 +174,7 @@ additional ones.  The cursor works as a transaction in the
 traditional `database sense`_ of a collection of actions that are managed such
 that, if any single one fails to commit to the database, all of them are
 cancelled.  By default, actions take place within the default cursor and that
-cursor will be rolled back (ie, its effects undone) on any unhandled error.
+cursor will be rolled back (i.e., its effects undone) on any unhandled error.
 Otherwise, the default cursor commits (saves to database).  It is possible to
 add additional cursors with ``Transaction().new_cursor()`` (and so, in effect,
 nest database transactions).  Unlike the default cursor, for which rollback and
@@ -220,16 +223,14 @@ The XML files take the form:
   </tryton>
 
 The XML files can be used to create instances of any ModelSQL class, but their
-most essential use is creating model instances of the built-in modules.
+most essiential use is creating instances of models defined in the built-in
+modules.
 
 Built-in Modules: ir and res
 ----------------------------
 
-Trytond has two built-in modules, ir and res, that are essential to
-implementation of Trytond, itself.  It is a testament to how powerful and
-flexible the Trytond kernel is that it is  used to model not only that tangible
-materials that Trytond users/customers will most often be interested in, but
-also the abstract concepts involved in these modules.
+Trytond has two built-in modules, ir (internal resources) and res (resources),
+that are essential to implementation of Trytond, itself.
 
 The ``ir`` module provides Trytond's ways to define the user interface.  By far, the
 most common purpose of Trytond XML files is to create instances of models defined in
@@ -254,11 +255,11 @@ only to the Tryton graphical interface, but to other interfaces, as well.
 Trytond includes a stable server that is frequently used in deployments.
 However, this built-in server is not the only way to make use of the Trytond
 kernel.  The Nereid_ project is an example of using the Trytond kernel as the
-backbone of a Flask-based web framework.  Trytond patches have also been written
+backbone of a Flask-based web framework.  Patches have also been written
 to enter the Trytond kernel through the WSGI_ protocol, and the Trytond
-maintainers have indicated that WSGI support will become a native Trytond feature
-in an upcoming release, which will make running the kernel through an
-alternative server a straight-forward endeavor.
+maintainers have indicated that WSGI support will soon become a native feature,
+which will make running the kernel through an alternative server a
+straight-forward endeavor.
 
 A common entry point for servers accessing the Trytond kernel is the ``dispatcher``
 function found at ``trytond.protocols.dispatcher.dispatch``.  Any server can access
@@ -270,7 +271,7 @@ of the Trytond kernel, if the server uses the Trytond ``Transaction`` API to han
 starting and stopping database transaction, similarly to interactive
 Trytond usage.  A example of this approach is the Nereid_ ``application.py``.
 
-Although the most common usage of Trytond is to serve requests for Tryton
+Although the most common usage of Trytond is to serve requests for the Tryton
 graphical client, it is not restricted to that purpose.  Any program that sets
 up a Trytond environment and either interacts with the dispatcher or explicitly
 governs transaction start and stop can make use of the Trytond kernel.

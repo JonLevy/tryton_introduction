@@ -2,7 +2,7 @@
 Coding Trytond
 ==============
 
-This page discusses a sample of the Trytond coding idioms available.
+This page discusses a sampling of the Trytond coding idioms available.
 
 Models and Fields
 =================
@@ -33,8 +33,8 @@ manually specified using the ``__register__`` method of ModelSQL.
 Fields
 ------
 
-The many types and attributes of Fields are not covered here, but are available
-in the `official fields documentation`_.
+The many types and attributes of Fields are covered in the
+`official fields documentation`_.
 
 
 Migrations with __register__
@@ -44,7 +44,7 @@ Database modifications other than adding tables and columns must be manually
 address through overriding the ``__register__`` method of the relevant class.
 Many migrations can be accomplished using Trytond's built-in ``TableHandler``
 class, the capabilities of which are set out in docstrings of the
-``TableHandlerInterface`` class of ``trytond/backend/table.py``.  What
+``TableHandlerInterface`` class at ``trytond/backend/table.py``.  What
 ``TableHandler`` cannot achieve can be done with either:
 
 ::
@@ -65,12 +65,11 @@ Any ``__register__`` function must also call the senior-class's
   super(AClassName, cls).__register__(module_name)
 
 The ``super`` call may occur before, after, or among other table/column
-modifying calls, depending whether it is those modifications should be done
-before or after the the automatic ``__register__`` action of creating tables
-and/or columns that the Python code requires, but that are missing from the
-database.
+modifying calls, depending whether those modifications should be done
+before or after the automatic ``__register__`` action of creating tables
+and/or columns.
 
-An example of ``__register__`` to remove the ``required`` constraint from a
+An example using ``__register__`` to remove the ``required`` constraint from a
 field is:
 
 ::
@@ -95,7 +94,7 @@ Modules have the following characteristics:
 
   #. A tryton.cfg file, which is a simple file that: (1) states the version of
      Trytond the modules is written for; (2) lists the other modules the
-     module depends on; (3) lists the XML files contained in this module
+     module depends on; and (3) lists the XML files contained in this module
      (which define model instances that get automatically written to the
      database as part of the module base configuration).  The files look like:
 
@@ -119,7 +118,7 @@ Modules have the following characteristics:
 
        from trytond.pool import Pool
 
-       # now go through all the .py files in your modules and import each Class
+       # go through all the .py files and import each Class
        from my_python_file import (  # repeat for all your files
            AClass, AnotherClass
        )
@@ -149,8 +148,7 @@ Modules have the following characteristics:
 
   #. A setup.py file (preferred but not strictly necessary).  A template
      setup.py for Trytond modules is `provided here`_.  Local modules that are
-     not distributed on PyPi_ can be installed using setup.py by navigating to
-     the parent folder of the modules and running
+     can be installed using setup.py by navigating to the parent folder of the modules and running
 
      ::
 
@@ -190,17 +188,17 @@ can be references through ``.`` notation, to arbitrary depth.  E.g.,
 ``field_name.associated_field.attribute``.
 
 The true power of domains, however, is not apparent until they are used with
-PYSON.  PYSON is another language, distinct from domains, that evaluates an
-expression against the current evaluation context, allowing for dynamic
-injection of values into domains.  For a typical use case of a domain with
-PYSON, assume that a you are modeling a customer referral service that has
-models ``Customer``, ``Vendor``, and ``Service``.  Each ``Customer`` is in need
-of a particular ``Service`` (stored in a ``service`` field), and each
-``Vendor`` provides a particular ``Service`` (stored in a ``service_provided``
-field) .  ``Customer`` has a ``Vendor`` field, indicating what ``Vendor`` they
-were referred to.  By adding the following domain to this ``Vendor`` field,
-you can restrict the options for ``Vendors`` to only those that provide the
-``Service`` needed by that ``Customer``.
+PYSON.  PYSON enables evaluation of an expression against the current
+evaluation context, allowing for dynamic injection of values into domains.  For
+a typical use case of a domain with PYSON, assume that a you are modeling a
+customer referral service that has models ``Customer``, ``Vendor``, and
+``Service``.  Each ``Customer`` is in need of a particular ``Service`` (stored
+in a ``service`` field), and each ``Vendor`` provides a particular ``Service``
+(stored in a ``service_provided`` field) .  ``Customer`` has a ``Vendor``
+field, indicating what ``Vendor`` they were referred to.  By adding the
+following domain to this ``Vendor`` field, you can restrict the options for
+``Vendors`` to only those that provide the ``Service`` needed by that
+``Customer``.
 
 ::
 
@@ -218,7 +216,9 @@ as follows:
 ::
 
   def PYSON_tester(psyon_expression, context):
+
     from trytond.pyson import PYSONDecoder, PYSONEncoder
+
     encoded_pyson = PYSONEncoder().encode(pyson_expression)
     return PYSONDecoder(context).decode(encoded_pyson)
 
@@ -247,13 +247,12 @@ record is saved, and should be written as:
 
 Errors and Warnings
 -------------------
-All models and wizards inherit are subclasses of
-``trytond.error.WarningErrorMixin``.  As a result, each model class has an
-``_error_messages`` attribute, which is a dictionary of ``[error name]:
-[display message for user]``.  Developers may create custom errors by adding to
-this dictionary.  Because this is a case of altering, but not totally
-overriding, an attribute of a parent class, it should be done in the new
-model's ``__setup__`` method.  For example:
+All models and wizards are subclasses of ``trytond.error.WarningErrorMixin``.
+As a result, each model class has an ``_error_messages`` attribute, which is a
+dictionary of ``[error name]: [display message for user]``.  Developers may
+create custom errors by adding to this dictionary.  Because this is a case of
+altering, but not totally overriding, an attribute of a parent class, it should
+be done in the new model's ``__setup__`` method.  For example:
 
 ::
    
@@ -288,12 +287,12 @@ changed significantly between Tryton 3.0 and 3.2.)
 Dynamic Field Attributes
 ========================
 
-Fields have these attributes, which all default to ``False``: ``readonly``
-(must be filled-in to save), ``readonly`` (cannot be written), and ``hidden`` (
-not shown in the user interface).  These attributes can be set either
+Fields have these attributes, which all default to ``False``: ``required``
+(must be filled-in to save), ``readonly`` (cannot be written), and ``hidden``
+(not shown in the user interface).  These attributes can be set either
 statically, as in:
 
-.::
+::
 
   name = fields.Char('Name', required=True)
 
@@ -302,6 +301,7 @@ or dynamically, as in:
 ::
 
   from trytond.pyson import Bool, Eval
+
   name = fields.Char('Name', states={
       'required': Bool(Eval('foo'))
   }
